@@ -1,49 +1,88 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import Subject from '../models/subjectModel';
+import catchAsync from '../utils/catchAsync';
+import AppError from '../utils/appError';
 
-export const createSubject = (req: Request, res: Response) => {
-  res.status(201).json({
-    status: 'success',
-    data: {
-      subject: { name: 'Subject 4' },
-    },
-  });
-};
+// Create subject
+export const createSubject = catchAsync(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const newSubject = await Subject.create(req.body);
 
-export const getAllSubjects = (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    results: 3,
-    data: {
-      subjects: [
-        { name: 'Subject 1' },
-        { name: 'Subject 2' },
-        { name: 'Subject 3' },
-      ],
-    },
-  });
-};
+    res.status(201).json({
+      status: 'success',
+      data: {
+        subject: newSubject,
+      },
+    });
+  }
+);
 
-export const getSubject = (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      subject: { name: `Subject with id ${req.params.id}` },
-    },
-  });
-};
+// Get all subjects
+export const getAllSubjects = catchAsync(
+  async (_req: Request, res: Response, _next: NextFunction) => {
+    const subjects = await Subject.find();
 
-export const updateSubject = (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      subject: `Subject updated with id ${req.params.id}`,
-    },
-  });
-};
+    res.status(200).json({
+      status: 'success',
+      results: subjects.length,
+      data: {
+        subjects,
+      },
+    });
+  }
+);
 
-export const deleteSubject = (req: Request, res: Response) => {
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-};
+// Get subject
+export const getSubject = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const subject = await Subject.findById(req.params.id);
+
+    if (!subject) {
+      return next(new AppError('No subject found with that ID', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        subject,
+      },
+    });
+  }
+);
+
+// Update subject
+export const updateSubject = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!subject) {
+      return next(new AppError('No subject found with that ID', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        subject,
+      },
+    });
+  }
+);
+
+// Delete subject
+export const deleteSubject = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const subject = await Subject.findByIdAndDelete(req.params.id);
+
+    if (!subject) {
+      return next(new AppError('No subject found with that ID', 404));
+    }
+
+    res.status(204).json({
+      status: 'success',
+      data: null,
+    });
+  }
+);
