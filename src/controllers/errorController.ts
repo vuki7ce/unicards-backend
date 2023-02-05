@@ -66,6 +66,7 @@ export default (
     let error = {
       ...err,
       name: err.name,
+      message: err.message,
       code: err.code,
       keyValue: err.keyValue as Record<string, any>,
     } as Record<string, any>;
