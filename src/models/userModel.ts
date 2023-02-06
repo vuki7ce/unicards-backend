@@ -2,7 +2,7 @@ import mongoose, { Model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 
-interface User {
+export interface User {
   firstName: string;
   lastName: string;
   username: string;
@@ -10,6 +10,7 @@ interface User {
   photo: string;
   password: string;
   passwordConfirm: string;
+  passwordChangedAt: Date;
 }
 
 interface UserMethods {
@@ -17,6 +18,7 @@ interface UserMethods {
     candidatePassword: string,
     userPassword: string
   ): Promise<boolean>;
+  changedPasswordAfter(JWTTimestamp: number): boolean;
 }
 
 type UserModel = Model<User, {}, UserMethods>;
@@ -61,6 +63,7 @@ const userSchema = new mongoose.Schema({
       message: 'Passwords are not the same!',
     },
   },
+  passwordChangedAt: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -75,6 +78,16 @@ userSchema.methods.correctPassword = async function (
   userPassword: string
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
+  if (!this.passwordChangedAt) return false;
+
+  const changedTimeStamp = parseInt(
+    `${this.passwordChangedAt.getTime() / 1000}`,
+    10
+  );
+  return JWTTimestamp < changedTimeStamp;
 };
 
 const User = mongoose.model<User, UserModel>('User', userSchema);

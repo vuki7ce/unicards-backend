@@ -6,10 +6,11 @@ import {
   updateSubject,
   deleteSubject,
 } from '../controllers/subjectController';
+import { protect } from '../controllers/authController';
 
 const router = express.Router();
 
-router.route('/').post(createSubject).get(getAllSubjects);
+router.route('/').post(createSubject).get(protect, getAllSubjects);
 
 router.route('/:id').get(getSubject).patch(updateSubject).delete(deleteSubject);
 
