@@ -38,7 +38,7 @@ export const getSubject = catchAsync(
     const subject = await Subject.findById(req.params.id);
 
     if (!subject) {
-      return next(new AppError('No subject found with that ID', 404));
+      return next(new AppError('No subject found with that ID!', 404));
     }
 
     res.status(200).json({
@@ -59,7 +59,7 @@ export const updateSubject = catchAsync(
     });
 
     if (!subject) {
-      return next(new AppError('No subject found with that ID', 404));
+      return next(new AppError('No subject found with that ID!', 404));
     }
 
     res.status(200).json({
@@ -77,7 +77,7 @@ export const deleteSubject = catchAsync(
     const subject = await Subject.findByIdAndDelete(req.params.id);
 
     if (!subject) {
-      return next(new AppError('No subject found with that ID', 404));
+      return next(new AppError('No subject found with that ID!', 404));
     }
 
     res.status(204).json({

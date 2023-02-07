@@ -25,6 +25,8 @@ export const signUp = catchAsync(
 
     const token = signToken(newUser.id);
 
+    newUser.password = undefined as unknown as string;
+
     res.status(201).json({
       status: 'success',
       token,
@@ -60,9 +62,14 @@ export const logIn = catchAsync(
     // 3.) If everything ok, send token to client
     const token = signToken(user.id);
 
+    user.password = undefined as unknown as string;
+
     res.status(200).json({
       status: 'success',
       token,
+      data: {
+        user,
+      },
     });
   }
 );
@@ -113,5 +120,48 @@ export const protect = catchAsync(
     // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
     next();
+  }
+);
+
+export const restrictTo =
+  (...roles: string[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    if (roles.includes(req.user?.role as string)) return next();
+    return next(
+      new AppError('You do not have permission to perform this action!', 403)
+    );
+  };
+
+export const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // 1) Get user from the collection
+    const user = await User.findById(req.user?._id).select('+password');
+
+    if (!user) {
+      return next(new AppError('No user found with that ID', 404));
+    }
+
+    // 2) Check if password is correct
+    if (
+      !(await user.correctPassword(req.body.currentPassword, user.password))
+    ) {
+      return next(new AppError('Your current password is wrong!', 401));
+    }
+
+    // 3) If so, update password
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save();
+
+    // 4) Log user in, send JWT
+    const token = signToken(user.id);
+
+    res.status(200).json({
+      status: 'success',
+      token,
+      data: {
+        user,
+      },
+    });
   }
 );

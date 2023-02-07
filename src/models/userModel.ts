@@ -1,13 +1,15 @@
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 
 export interface User {
+  _id: Types.ObjectId;
   firstName: string;
   lastName: string;
   username: string;
   email: string;
   photo: string;
+  role: string;
   password: string;
   passwordConfirm: string;
   passwordChangedAt: Date;
@@ -46,6 +48,11 @@ const userSchema = new mongoose.Schema({
     validate: [validator.isEmail, 'Email is not valid!'],
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'A user must have a password!'],
