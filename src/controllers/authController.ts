@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/userModel';
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
+import filterObj from '../utils/filterObj';
 
 const signToken = (id: ObjectId) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
@@ -14,14 +15,17 @@ const signToken = (id: ObjectId) => {
 
 export const signUp = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newUser = await User.create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      username: req.body.username,
-      email: req.body.email,
-      password: req.body.password,
-      passwordConfirm: req.body.passwordConfirm,
-    });
+    const filteredBody = filterObj(
+      req.body,
+      'firstName',
+      'lastName',
+      'username',
+      'email',
+      'password',
+      'passwordConfirm'
+    );
+
+    const newUser = await User.create(filteredBody);
 
     const token = signToken(newUser.id);
 

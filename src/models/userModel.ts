@@ -13,6 +13,8 @@ export interface User {
   password: string;
   passwordConfirm: string;
   passwordChangedAt: Date;
+  createdAt: Date;
+  modifiedAt: Date;
 }
 
 interface UserMethods {
@@ -47,7 +49,10 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, 'Email is not valid!'],
   },
-  photo: String,
+  photo: {
+    type: String,
+    default: 'default.jpg',
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
@@ -71,6 +76,14 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  modifiedAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 userSchema.pre('save', async function (next) {
