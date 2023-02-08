@@ -10,9 +10,6 @@ const subjectSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  tags: {
-    type: [String],
-  },
   isPrivate: {
     type: Boolean,
     default: false,
