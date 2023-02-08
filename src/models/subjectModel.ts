@@ -37,14 +37,6 @@ const subjectSchema = new mongoose.Schema({
       ref: 'User',
     },
   ],
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-  },
-  modifiedAt: {
-    type: Date,
-    default: Date.now(),
-  },
 });
 
 const Subject = mongoose.model('Subject', subjectSchema);
