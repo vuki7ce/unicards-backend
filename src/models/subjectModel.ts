@@ -28,6 +28,12 @@ const subjectSchema = new mongoose.Schema({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   downloads: [
     {
       type: mongoose.Schema.Types.ObjectId,
