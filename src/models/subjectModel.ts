@@ -19,18 +19,6 @@ const subjectSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'A subject must belong to a user!'],
   },
-  likes: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  ],
-  dislikes: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  ],
   downloads: [
     {
       type: mongoose.Schema.Types.ObjectId,

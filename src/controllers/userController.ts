@@ -5,6 +5,7 @@ import User from '../models/userModel';
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
 import filterObj from '../utils/filterObj';
+import { ObjectId } from 'mongoose';
 
 // const multerStorage = multer.diskStorage({
 //   destination: (_req, _file, cb) => {
@@ -50,7 +51,7 @@ export const resizeUserPhoto = (
 ) => {
   if (!req.file) return next();
 
-  req.file.filename = `user-${req.user?._id}-${Date.now()}.jpeg`;
+  req.file.filename = `user-${req.currentUser?._id}-${Date.now()}.jpeg`;
 
   sharp(req.file.buffer)
     .resize(500, 500)
@@ -60,6 +61,15 @@ export const resizeUserPhoto = (
     .toFile(`src/public/img/users/${req.file.filename}`);
 
   next();
+};
+
+export const getMe = (req: Request, res: Response, next: NextFunction) => {
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: req.currentUser,
+    },
+  });
 };
 
 export const updateMe = catchAsync(
@@ -86,7 +96,7 @@ export const updateMe = catchAsync(
     if (req.file) filteredBody.photo = req.file.filename;
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user!._id,
+      req.currentUser!._id,
       filteredBody,
       { new: true, runValidators: true }
     );
@@ -102,7 +112,7 @@ export const updateMe = catchAsync(
 
 export const deleteMe = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const deletedUser = await User.findByIdAndDelete(req.user?._id);
+    const deletedUser = await User.findByIdAndDelete(req.currentUser?._id);
 
     if (!deletedUser) {
       return next(new AppError('No user found with that ID!', 404));

@@ -26,10 +26,17 @@ export const signUp = catchAsync(
     );
 
     const newUser = await User.create(filteredBody);
+    newUser.password = undefined as unknown as string;
 
     const token = signToken(newUser.id);
 
-    newUser.password = undefined as unknown as string;
+    res.cookie('jwt', token, {
+      expires: new Date(
+        Date.now() +
+          +(process.env.JWT_COOKIE_EXPIRES_IN as string) * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+    });
 
     res.status(201).json({
       status: 'success',
@@ -43,19 +50,19 @@ export const signUp = catchAsync(
 
 export const logIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, username, password } = req.body;
+    const { usernameOrEmail, password } = req.body;
 
     // 1.) Check if email and password exist
-    if ((!email && !username) || !password) {
+    if (!usernameOrEmail || !password) {
       return next(
         new AppError(`Please provide email or username and password!`, 400)
       );
     }
 
     // 2.) Check if user exists && password is correct
-    const user = await User.findOne({ $or: [{ email }, { username }] }).select(
-      '+password'
-    );
+    const user = await User.findOne({
+      $or: [{ email: usernameOrEmail }, { username: usernameOrEmail }],
+    }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user?.password))) {
       return next(
@@ -63,10 +70,18 @@ export const logIn = catchAsync(
       );
     }
 
+    user.password = undefined as unknown as string;
+
     // 3.) If everything ok, send token to client
     const token = signToken(user.id);
 
-    user.password = undefined as unknown as string;
+    res.cookie('jwt', token, {
+      expires: new Date(
+        Date.now() +
+          +(process.env.JWT_COOKIE_EXPIRES_IN as string) * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+    });
 
     res.status(200).json({
       status: 'success',
@@ -78,6 +93,17 @@ export const logIn = catchAsync(
   }
 );
 
+export const logOut = (req: Request, res: Response, next: NextFunction) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() - 1000000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    status: 'success',
+  });
+};
+
 export const protect = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     // 1) Getting token and check if it's there
@@ -87,6 +113,8 @@ export const protect = catchAsync(
       req.headers.authorization.startsWith('Bearer')
     ) {
       token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies.jwt) {
+      token = req.cookies.jwt;
     }
 
     if (!token)
@@ -122,7 +150,7 @@ export const protect = catchAsync(
     }
 
     // GRANT ACCESS TO PROTECTED ROUTE
-    req.user = currentUser;
+    req.currentUser = currentUser;
     next();
   }
 );
@@ -130,7 +158,7 @@ export const protect = catchAsync(
 export const restrictTo =
   (...roles: string[]) =>
   (req: Request, res: Response, next: NextFunction) => {
-    if (roles.includes(req.user?.role as string)) return next();
+    if (roles.includes(req.currentUser?.role as string)) return next();
     return next(
       new AppError('You do not have permission to perform this action!', 403)
     );
@@ -139,7 +167,7 @@ export const restrictTo =
 export const updatePassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     // 1) Get user from the collection
-    const user = await User.findById(req.user?._id).select('+password');
+    const user = await User.findById(req.currentUser?._id).select('+password');
 
     if (!user) {
       return next(new AppError('No user found with that ID', 404));

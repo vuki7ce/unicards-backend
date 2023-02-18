@@ -10,12 +10,12 @@ import { protect, restrictTo } from '../controllers/authController';
 
 const router = express.Router();
 
-router.route('/').post(createSubject).get(protect, getAllSubjects);
+router.route('/').post(protect, createSubject).get(protect, getAllSubjects);
 
 router
   .route('/:id')
   .get(getSubject)
   .patch(updateSubject)
-  .delete(protect, restrictTo('admin'), deleteSubject);
+  .delete(protect, deleteSubject);
 
 export default router;
